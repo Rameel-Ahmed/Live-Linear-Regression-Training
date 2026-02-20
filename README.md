@@ -39,8 +39,8 @@ A comprehensive web-based platform for training and visualizing univariate linea
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
-   cd linear-regression-final
+   git clone https://github.com/Rameel-Ahmed/Live-Linear-Regression-Training.git
+   cd Live-Linear-Regression-Training
    ```
 
 2. **Install dependencies**

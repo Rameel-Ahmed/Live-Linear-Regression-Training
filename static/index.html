@@ -3,9 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>Linear Regression - Data Upload</title>
     <link rel="stylesheet" href="/static/css/styles.css" />
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+      (function () {
+        const t = localStorage.getItem("theme") || "light";
+        document.documentElement.setAttribute("data-theme", t);
+      })();
+    </script>
   </head>
   <body>
     <!-- Toast Container for Notifications -->
@@ -79,9 +88,23 @@
         <h2>RegressLab</h2>
         <button class="sidebar-toggle" id="sidebarToggle">☰</button>
       </div>
-      <div class="nav-item active">Data Upload</div>
-      <div class="nav-item">Training Setup</div>
-      <div class="nav-item">Results & Predict</div>
+      
+      <!-- User Info Section -->
+      <div id="userInfo" class="user-info" style="display: none;">
+        <div class="user-details">
+          <span id="username">Guest</span>
+          <button id="logoutBtn" class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+      </div>
+      
+      <a href="/static/index.html" class="nav-item active" data-step="1"
+        >Data Upload</a
+      >
+      <div class="nav-item" data-step="2" id="trainingNavItem">Training Setup</div>
+      <a href="/static/results.html" class="nav-item" data-step="3" id="resultsNavItem"
+        >Results & Predict</a
+      >
+      <div class="nav-item" id="savedModelsNavItem" style="display: none;">Saved Models</div>
     </nav>
 
     <!-- Mobile Menu Toggle -->
@@ -353,8 +376,9 @@
               id="proceedToTrainBtn"
               class="btn btn-success btn-large"
               onclick="proceedToTraining()"
+              disabled
             >
-              Proceed to Model Training
+              Load Data to Enable Training
             </button>
           </div>
         </section>
@@ -362,5 +386,442 @@
     </main>
 
     <script type="module" src="/static/js/script.js"></script>
+    
+    <script>
+      // User Authentication Functions
+      function checkUserAuth() {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        const sessionId = localStorage.getItem('session_id');
+        
+        if (user && sessionId) {
+          // User is signed in
+          document.getElementById('userInfo').style.display = 'block';
+          document.getElementById('username').textContent = user.username;
+          document.getElementById('savedModelsNavItem').style.display = 'block';
+          
+          // Make saved models nav item clickable
+          document.getElementById('savedModelsNavItem').style.cursor = 'pointer';
+          document.getElementById('savedModelsNavItem').onclick = () => {
+            window.location.href = '/static/saved-models.html';
+          };
+          
+          // For logged-in users: Training and Results nav items should be disabled until they have data
+          document.getElementById('trainingNavItem').style.cursor = 'not-allowed';
+          document.getElementById('trainingNavItem').onclick = () => {
+            // Check if user has loaded data
+            if (window.cleanedData && window.cleanedDataColumns) {
+              window.location.href = '/static/training.html';
+            } else {
+              showMessage('Please load and clean data first to access training.', 'warning');
+            }
+          };
+          
+          document.getElementById('resultsNavItem').style.cursor = 'not-allowed';
+          document.getElementById('resultsNavItem').onclick = () => {
+            // Check if user has training data or selected model
+            const trainingData = localStorage.getItem('allTrainingData');
+            const selectedModelId = localStorage.getItem('selectedModelId');
+            
+            if (trainingData || selectedModelId) {
+              // User has model data, allow access to results
+              window.location.href = '/static/results.html';
+            } else {
+              // User must either train a new model or select a saved model
+              showMessage('Please either train a new model or select a saved model to view results.', 'warning');
+            }
+          };
+          
+          // Add disabled class to training and results nav items for logged-in users
+          document.getElementById('trainingNavItem').classList.add('disabled');
+          document.getElementById('resultsNavItem').classList.add('disabled');
+        } else {
+          // User is guest
+          document.getElementById('userInfo').style.display = 'none';
+          document.getElementById('savedModelsNavItem').style.display = 'none';
+          
+          // For guests: Training and Results nav items should be disabled until they have data
+          document.getElementById('trainingNavItem').style.cursor = 'not-allowed';
+          document.getElementById('trainingNavItem').onclick = () => {
+            // Check if user has loaded data
+            if (window.cleanedData && window.cleanedDataColumns) {
+              window.location.href = '/static/training.html';
+            } else {
+              showMessage('Please load and clean data first to access training.', 'warning');
+            }
+          };
+          
+          document.getElementById('resultsNavItem').style.cursor = 'not-allowed';
+          document.getElementById('resultsNavItem').onclick = () => {
+            // Check if user has training data
+            const trainingData = localStorage.getItem('allTrainingData');
+            
+            if (trainingData) {
+              // User has training data, allow access to results
+              window.location.href = '/static/results.html';
+            } else {
+              // User must complete training first
+              showMessage('Please complete model training to view results.', 'warning');
+            }
+          };
+          
+          // Add disabled class to training and results nav items for guests
+          document.getElementById('trainingNavItem').classList.add('disabled');
+          document.getElementById('resultsNavItem').classList.add('disabled');
+        }
+      }
+      
+      // Show message function
+      function showMessage(message, type) {
+        // Create a temporary message display
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
+        messageDiv.textContent = message;
+        messageDiv.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 1rem;
+          border-radius: 8px;
+          color: white;
+          font-weight: 500;
+          z-index: 1000;
+          max-width: 300px;
+        `;
+        
+        if (type === 'warning') {
+          messageDiv.style.backgroundColor = '#f39c12';
+        } else if (type === 'error') {
+          messageDiv.style.backgroundColor = '#e74c3c';
+        } else {
+          messageDiv.style.backgroundColor = '#27ae60';
+        }
+        
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 4000);
+      }
+      
+      function logout() {
+        const sessionId = localStorage.getItem('session_id');
+        
+        if (sessionId) {
+          // Call logout API
+          fetch('/api/v1/auth/signout', {
+            method: 'POST',
+            headers: {
+              'Cookie': `session_id=${sessionId}`
+            }
+          }).catch(error => console.error('Logout error:', error));
+        }
+        
+        // Clear local storage
+        localStorage.removeItem('user');
+        localStorage.removeItem('session_id');
+        
+        // Redirect to login page
+        window.location.href = '/';
+      }
+      
+      // Check auth on page load
+      document.addEventListener('DOMContentLoaded', checkUserAuth);
+      
+      // Check if data is already loaded and enable training button if so
+      function checkDataState() {
+        if (window.cleanedData && window.cleanedDataColumns) {
+          // Enable the training button
+          const proceedBtn = document.getElementById('proceedToTrainBtn');
+          if (proceedBtn) {
+            proceedBtn.disabled = false;
+            proceedBtn.textContent = 'Proceed to Model Training';
+          }
+          
+          // Enable the training navigation item
+          const trainingNavItem = document.getElementById('trainingNavItem');
+          if (trainingNavItem) {
+            trainingNavItem.style.cursor = 'pointer';
+            trainingNavItem.classList.remove('disabled');
+            trainingNavItem.onclick = () => {
+              window.location.href = '/static/training.html';
+            };
+          }
+        }
+      }
+      
+      // Also check when page becomes visible (user navigates back)
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          checkDataState();
+        }
+      });
+      
+      // Validate session only for authenticated users
+      async function validateSession() {
+        const sessionId = localStorage.getItem('session_id');
+        const user = localStorage.getItem('user');
+        
+        // If no session, user is guest - allow access
+        if (!sessionId || !user) {
+          return true;
+        }
+        
+        // User has session, validate it
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            headers: {
+              'Cookie': `session_id=${sessionId}`
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (!result.authenticated) {
+            // Invalid session, clear storage but allow as guest
+            clearUserData();
+            return true;
+          }
+          
+          return true;
+        } catch (error) {
+          // Network error, clear storage but allow as guest
+          clearUserData();
+          return true;
+        }
+      }
+      
+      function clearUserData() {
+        localStorage.removeItem('user');
+        localStorage.removeItem('session_id');
+        localStorage.removeItem('allTrainingData');
+        localStorage.removeItem('selectedModelId');
+        localStorage.removeItem('session_timestamp');
+        localStorage.removeItem('last_page');
+      }
+      
+      // Update session timestamp on user activity
+      function updateSessionTimestamp() {
+        const sessionId = localStorage.getItem('session_id');
+        if (sessionId) {
+          localStorage.setItem('session_timestamp', Date.now().toString());
+        }
+      }
+      
+      // Monitor user activity
+      function startActivityMonitoring() {
+        const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        events.forEach(event => {
+          document.addEventListener(event, updateSessionTimestamp, true);
+        });
+      }
+      
+      // Block back/forward navigation more aggressively
+      function blockNavigation() {
+        // Disable back button
+        history.pushState(null, null, location.href);
+        window.addEventListener('popstate', function() {
+          history.pushState(null, null, location.href);
+          // Force redirect to login if trying to go back
+          const sessionId = localStorage.getItem('session_id');
+          if (sessionId) {
+            clearUserData();
+            window.location.href = '/';
+          }
+        });
+        
+        // Block forward button
+        window.addEventListener('pageshow', function(event) {
+          if (event.persisted) {
+            // Page loaded from cache (back/forward), redirect to login
+            const sessionId = localStorage.getItem('session_id');
+            if (sessionId) {
+              clearUserData();
+              window.location.href = '/';
+            }
+          }
+        });
+      }
+      
+      // EVEN EARLIER CHECK: Block before page loads
+      document.addEventListener('DOMContentLoaded', () => {
+        const lastPage = localStorage.getItem('last_page');
+        const sessionId = localStorage.getItem('session_id');
+        
+        // Only block if user has NO session but last_page is 'login'
+        // This indicates a back navigation attempt without authentication
+        if (lastPage === 'login' && !sessionId) {
+          // User navigated back from login without signing in
+          localStorage.removeItem('last_page');
+          window.location.href = '/';
+          return;
+        }
+      });
+      
+      // Check session validity on page load
+      window.addEventListener('load', async () => {
+        // IMMEDIATE CHECK: Block if user just came from login without session
+        const lastPage = localStorage.getItem('last_page');
+        const sessionId = localStorage.getItem('session_id');
+        
+        // Only block if user has NO session but last_page is 'login'
+        if (lastPage === 'login' && !sessionId) {
+          // User just navigated back from login without signing in
+          localStorage.removeItem('last_page');
+          window.location.href = '/';
+          return;
+        }
+        
+        await validateSession();
+        checkUserAuth();
+        checkDataState();
+        
+        // Start session heartbeat for authenticated users
+        const sessionId2 = localStorage.getItem('session_id');
+        const user = localStorage.getItem('user');
+        if (sessionId2 && user) {
+          startSessionHeartbeat();
+          startActivityMonitoring();
+          blockNavigation(); // Block navigation for authenticated users
+        }
+      });
+      
+      // Check session on page focus (when user returns to tab)
+      window.addEventListener('focus', async () => {
+        await validateSession();
+        checkUserAuth();
+      });
+      
+      // Check session on page visibility change
+      document.addEventListener('visibilitychange', async () => {
+        if (!document.hidden) {
+          await validateSession();
+          checkUserAuth();
+        }
+      });
+      
+      // Session heartbeat system - continuously validate session
+      let sessionHeartbeat;
+      
+      function startSessionHeartbeat() {
+        // Check session every 5 seconds
+        sessionHeartbeat = setInterval(async () => {
+          await validateSession();
+          checkUserAuth();
+        }, 5000);
+      }
+      
+      function stopSessionHeartbeat() {
+        if (sessionHeartbeat) {
+          clearInterval(sessionHeartbeat);
+          sessionHeartbeat = null;
+        }
+      }
+      
+      // Enhanced session validation with redirect protection
+      async function validateSession() {
+        const sessionId = localStorage.getItem('session_id');
+        const user = localStorage.getItem('user');
+        const sessionTimestamp = localStorage.getItem('session_timestamp');
+        const lastPage = localStorage.getItem('last_page');
+        
+        // If no session, user is guest - allow access
+        if (!sessionId || !user) {
+          // Set current page as last visited
+          localStorage.setItem('last_page', 'index');
+          return true;
+        }
+        
+        // Check if user is trying to access from login page without proper authentication
+        // This would only happen with back navigation after failed login
+        if (lastPage === 'login') {
+          // Clear the last_page and continue (user might have signed in)
+          localStorage.removeItem('last_page');
+        }
+        
+        // Check if session is too old (more than 24 hours)
+        if (sessionTimestamp) {
+          const sessionAge = Date.now() - parseInt(sessionTimestamp);
+          const maxSessionAge = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+          
+          if (sessionAge > maxSessionAge) {
+            // Session too old, clear storage and redirect to login
+            clearUserData();
+            window.location.href = '/';
+            return false;
+          }
+        }
+        
+        // User has session, validate it
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            headers: {
+              'Cookie': `session_id=${sessionId}`
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (!result.authenticated) {
+            // Invalid session, clear storage and redirect to login
+            clearUserData();
+            window.location.href = '/';
+            return false;
+          }
+          
+          // Set current page as last visited
+          localStorage.setItem('last_page', 'index');
+          return true;
+        } catch (error) {
+          // Network error, clear storage and redirect to login
+          clearUserData();
+          window.location.href = '/';
+          return false;
+        }
+      }
+      
+      // Check session validity on page load
+      window.addEventListener('load', async () => {
+        await validateSession();
+        checkUserAuth();
+        checkDataState();
+        
+        // Start session heartbeat for authenticated users
+        const sessionId = localStorage.getItem('session_id');
+        const user = localStorage.getItem('user');
+        if (sessionId && user) {
+          startSessionHeartbeat();
+        }
+      });
+      
+      // Check session on page focus (when user returns to tab)
+      window.addEventListener('focus', async () => {
+        await validateSession();
+        checkUserAuth();
+      });
+      
+      // Check session on page visibility change
+      document.addEventListener('visibilitychange', async () => {
+        if (!document.hidden) {
+          await validateSession();
+          checkUserAuth();
+        }
+      });
+      
+      // Additional protection against browser navigation
+      window.addEventListener('pageshow', async (event) => {
+        // This event fires when page is loaded from cache (back/forward)
+        if (event.persisted) {
+          // Page was loaded from cache, validate session immediately
+          await validateSession();
+          checkUserAuth();
+        }
+      });
+      
+      // Protect against beforeunload (when user tries to navigate away)
+      window.addEventListener('beforeunload', () => {
+        // Clear heartbeat when leaving page
+        stopSessionHeartbeat();
+      });
+    </script>
   </body>
 </html>

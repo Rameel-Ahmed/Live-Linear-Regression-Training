@@ -791,6 +791,13 @@ function showCleaningResults(result) {
     y_std: result.statistics.y_std,
   };
 
+  // Enable the training button now that data is loaded
+  const proceedBtn = document.getElementById('proceedToTrainBtn');
+  if (proceedBtn) {
+    proceedBtn.disabled = false;
+    proceedBtn.textContent = 'Proceed to Model Training';
+  }
+
   // Show visualization section and create charts
   showVisualizations();
 }

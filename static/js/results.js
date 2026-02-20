@@ -13,7 +13,48 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Ensure modelData is available for predictions from session data
   const comprehensiveResults = localStorage.getItem("comprehensiveResults");
-  if (comprehensiveResults) {
+  const allTrainingData = localStorage.getItem("allTrainingData");
+  const selectedModelId = localStorage.getItem("selectedModelId");
+  
+  // If we have a selected model ID, prioritize that data
+  if (selectedModelId && allTrainingData) {
+    try {
+      const trainingData = JSON.parse(allTrainingData);
+      
+      modelData = {
+        theta0: trainingData.final_theta0 || 0,
+        theta1: trainingData.final_theta1 || 0,
+        equation: trainingData.equation || "y = 0x + 0",
+      };
+      console.log("🔄 modelData set from saved model:", modelData);
+      
+      showSuccessToast(
+        "Model Loaded Successfully!",
+        "Your saved model is ready for predictions"
+      );
+    } catch (e) {
+      console.error("Error parsing saved model data:", e);
+    }
+  } else if (allTrainingData && !selectedModelId) {
+    // Regular training data (no saved model)
+    try {
+      const trainingData = JSON.parse(allTrainingData);
+      
+      modelData = {
+        theta0: trainingData.final_theta0 || 0,
+        theta1: trainingData.final_theta1 || 0,
+        equation: trainingData.equation || "y = 0x + 0",
+      };
+      console.log("🔄 modelData set from training data:", modelData);
+      
+      showSuccessToast(
+        "Training Completed Successfully!",
+        "Your linear regression model is ready for predictions"
+      );
+    } catch (e) {
+      console.error("Error parsing training data:", e);
+    }
+  } else if (comprehensiveResults) {
     try {
       const compData = JSON.parse(comprehensiveResults);
       const trainingData = JSON.parse(compData.allTrainingData || "{}");
@@ -60,7 +101,66 @@ function initializeTheme() {
 
 async function loadTrainingResults() {
   try {
-    // Load comprehensive results from localStorage
+    // Check if we're loading from a saved model
+    const selectedModelId = localStorage.getItem("selectedModelId");
+    
+    if (selectedModelId) {
+      // Loading from saved model - use allTrainingData
+      const allTrainingData = localStorage.getItem("allTrainingData");
+      
+      if (!allTrainingData) {
+        alert('No model data found. Please try selecting the model again.');
+        window.location.href = "/static/saved-models.html";
+        return;
+      }
+      
+      // Clear old training data to ensure fresh loading
+      localStorage.removeItem("comprehensiveResults");
+      
+      // Parse the training data
+      const trainingData = JSON.parse(allTrainingData);
+      console.log("📊 Loading from saved model:", trainingData);
+      
+      // Store the data in the expected format
+      trainingResults = trainingData;
+      window.sklearnResults = trainingData.sklearn_comparison;
+      
+      // Display results
+      displayModelSummary();
+      
+      // Display sklearn comparison if available
+      if (trainingData.sklearn_comparison && trainingData.sklearn_comparison.sklearn_results) {
+        displaySklearnComparison(trainingData.sklearn_comparison);
+      }
+      
+      // Also update the sklearn comparison table if it exists
+      if (trainingData.sklearn_comparison?.sklearn_results) {
+        const sklearnResults = trainingData.sklearn_comparison.sklearn_results;
+        
+        // Update sklearn metrics in the comparison table
+        const sklearnRmseElement = document.getElementById('sklearnRmse');
+        if (sklearnRmseElement && sklearnResults.rmse !== null) {
+          sklearnRmseElement.textContent = sklearnResults.rmse.toFixed(6);
+        }
+        
+        const sklearnMaeElement = document.getElementById('sklearnMae');
+        if (sklearnMaeElement && sklearnResults.mae !== null) {
+          sklearnMaeElement.textContent = sklearnResults.mae.toFixed(6);
+        }
+        
+        const sklearnR2Element = document.getElementById('sklearnR2');
+        if (sklearnR2Element && sklearnResults.r2_score !== null) {
+          sklearnR2Element.textContent = sklearnResults.r2_score.toFixed(4);
+        }
+      }
+      
+      // Clear the selected model ID to avoid confusion
+      localStorage.removeItem("selectedModelId");
+      
+      return;
+    }
+    
+    // Load comprehensive results from localStorage (normal training flow)
     const comprehensiveResults = localStorage.getItem("comprehensiveResults");
 
     if (!comprehensiveResults) {
@@ -394,7 +494,112 @@ function displayModelSummary() {
   try {
     console.log("📊 Displaying model summary...");
 
-    // Get comprehensive results
+    // Check if we're loading from a saved model
+    const allTrainingData = localStorage.getItem("allTrainingData");
+    
+    if (allTrainingData) {
+      // Loading from saved model or existing training data
+      const trainingData = JSON.parse(allTrainingData);
+      console.log("🔍 Training data structure:", trainingData);
+      
+      // Extract data directly from the training data structure
+      const finalTheta0 = trainingData.final_theta0;
+      const finalTheta1 = trainingData.final_theta1;
+      const equation = trainingData.equation;
+      const finalRmse = trainingData.final_rmse;
+      const finalMae = trainingData.final_mae;
+      const finalR2 = trainingData.final_r2;
+      
+      // For saved models, we might not have all training parameters
+      const testMse = trainingData.test_mse || null;
+      const testR2 = trainingData.test_r2 || null;
+      const totalEpochs = trainingData.total_epochs || null;
+      const xColumn = trainingData.x_column || null;
+      const yColumn = trainingData.y_column || null;
+      
+      // Training parameters (might not be available for saved models)
+      const learningRate = trainingData.learning_rate || null;
+      const epochs = trainingData.epochs || null;
+      const tolerance = trainingData.tolerance || null;
+      const earlyStopping = trainingData.early_stopping || null;
+      const trainingSpeed = trainingData.training_speed || null;
+      const trainSplit = trainingData.train_split || null;
+      
+      console.log("🔍 Extracted values from training data:", {
+        finalTheta0,
+        finalTheta1,
+        equation,
+        finalRmse,
+        finalMae,
+        finalR2,
+        testMse,
+        testR2,
+      });
+      
+      // Update equation displays
+      const equationDisplay = document.getElementById("finalEquation");
+      if (equationDisplay && equation) {
+        equationDisplay.textContent = equation;
+      }
+
+      const predictionEquationDisplay = document.getElementById("predictionEquation");
+      if (predictionEquationDisplay && equation) {
+        predictionEquationDisplay.textContent = equation;
+      }
+
+      // Set modelData for predictions
+      modelData = {
+        theta0: finalTheta0,
+        theta1: finalTheta1,
+        equation: equation,
+      };
+
+      // Update metrics
+      const rSquared = document.getElementById("rSquared");
+      if (rSquared) {
+        rSquared.textContent = finalR2 ? finalR2.toFixed(4) : "N/A";
+      }
+
+      const finalRmseElement = document.getElementById("finalRmse");
+      if (finalRmseElement) {
+        finalRmseElement.textContent = finalRmse ? finalRmse.toFixed(6) : "N/A";
+      }
+
+      const finalMaeElement = document.getElementById("finalMae");
+      if (finalMaeElement) {
+        finalMaeElement.textContent = finalMae ? finalMae.toFixed(6) : "N/A";
+      }
+
+      const totalEpochsElement = document.getElementById("totalEpochs");
+      if (totalEpochsElement && totalEpochs) {
+        totalEpochsElement.textContent = totalEpochs;
+      }
+
+      // Update training parameters (only if available)
+      const learningRateValue = document.getElementById("learningRateValue");
+      if (learningRateValue && learningRate) {
+        learningRateValue.textContent = learningRate;
+      }
+
+      const toleranceValue = document.getElementById("toleranceValue");
+      if (toleranceValue && tolerance) {
+        toleranceValue.textContent = tolerance;
+      }
+
+      const epochsValue = document.getElementById("epochsValue");
+      if (epochsValue && epochs) {
+        epochsValue.textContent = epochs;
+      }
+
+      const earlyStoppingValue = document.getElementById("earlyStoppingValue");
+      if (earlyStoppingValue && earlyStopping !== null) {
+        earlyStoppingValue.textContent = earlyStopping ? "Yes" : "No";
+      }
+      
+      return; // Exit early since we've handled the saved model case
+    }
+
+    // Get comprehensive results (normal training flow)
     const comprehensiveResults = JSON.parse(
       localStorage.getItem("comprehensiveResults") || "{}"
     );

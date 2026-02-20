@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Login - Linear Regression Platform</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: var(--primary-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 480px;
+            margin: 2rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+        }
+        
+        .theme-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .theme-toggle:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .login-header h1 {
+            margin: 0 0 0.5rem 0;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .login-header p {
+            margin: 0;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .login-body {
+            padding: 2.5rem 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--input-bg);
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(99, 179, 237, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .password-requirements {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            background: var(--stats-bg);
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .requirement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.25rem;
+            gap: 0.5rem;
+        }
+        
+        .requirement.met {
+            color: var(--success-color);
+        }
+        
+        .requirement.unmet {
+            color: var(--text-secondary);
+        }
+        
+        .requirement-icon {
+            font-size: 0.9rem;
+        }
+        
+        .password-strength {
+            margin-top: 0.75rem;
+        }
+        
+        .strength-bar {
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            margin-top: 0.5rem;
+            overflow: hidden;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 3px;
+        }
+        
+        .strength-weak { width: 25%; background: var(--error-color); }
+        .strength-medium { width: 50%; background: var(--warning-color); }
+        .strength-good { width: 75%; background: #3b82f6; }
+        .strength-strong { width: 100%; background: var(--success-color); }
+        
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary {
+            background: var(--accent-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(99, 179, 237, 0.3);
+        }
+        
+        .btn-primary:disabled {
+            background: var(--border-color);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-primary:disabled::before {
+            display: none;
+        }
+        
+        .btn-guest {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-guest:hover {
+            background: var(--success-color);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+        }
+        
+        .form-toggle {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .form-toggle button {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+        
+        .form-toggle button:hover {
+            color: var(--accent-color);
+            background: rgba(99, 179, 237, 0.1);
+        }
+        
+        .error-message, .success-message {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+            font-weight: 500;
+            border-left: 4px solid;
+        }
+        
+        .error-message {
+            color: var(--error-color);
+            background: rgba(220, 38, 38, 0.1);
+            border-left-color: var(--error-color);
+        }
+        
+        .success-message {
+            color: var(--success-color);
+            background: rgba(40, 167, 69, 0.1);
+            border-left-color: var(--success-color);
+        }
+        
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+            position: relative;
+        }
+        
+        .loading::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid transparent;
+            border-top: 2px solid var(--accent-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .form-container {
+            display: none;
+        }
+        
+        .form-container.active {
+            display: block;
+        }
+        
+        .guest-info {
+            text-align: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(40, 167, 69, 0.1);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+        
+        .guest-info strong {
+            color: var(--success-color);
+        }
+        
+        .arrow-indicator {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover .arrow-indicator {
+            opacity: 1;
+            top: -30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <button class="theme-toggle" id="themeBtn">🌙</button>
+            <h1>RegressLab</h1>
+            <p>Linear Regression Model Training Platform</p>
+        </div>
+        
+        <div class="login-body">
+            <!-- Error/Success Messages -->
+            <div id="errorMessage" class="error-message"></div>
+            <div id="successMessage" class="success-message"></div>
+            
+            <!-- Sign In Form -->
+            <div id="signinForm" class="form-container active">
+                <form id="signinFormElement" autocomplete="off">
+                    <div class="form-group">
+                        <label for="signinUsername">Username</label>
+                        <input type="text" id="signinUsername" name="username" required 
+                               placeholder="Enter your username" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="signinPassword">Password</label>
+                        <input type="password" id="signinPassword" name="password" required 
+                               placeholder="Enter your password" autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="arrow-indicator">↑</span>
+                        Sign In
+                    </button>
+                </form>
+                
+                <div class="form-toggle">
+                    <button type="button" onclick="toggleForm('signup')">Don't have an account? Sign Up</button>
+                </div>
+            </div>
+            
+            <!-- Sign Up Form -->
+            <div id="signupForm" class="form-container">
+                <form id="signupFormElement" autocomplete="off">
+                    <div class="form-group">
+                        <label for="signupUsername">Username</label>
+                        <input type="text" id="signupUsername" name="username" required minlength="3" 
+                               placeholder="Choose a username (min 3 characters)" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email (Optional)</label>
+                        <input type="email" id="signupEmail" name="email" 
+                               placeholder="your.email@example.com" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" name="password" required minlength="8" 
+                               placeholder="Choose a strong password (min 8 characters)"
+                               oninput="checkPasswordStrength(this.value)" autocomplete="off">
+                        
+                        <div class="password-requirements">
+                            <div class="requirement" id="req-length">
+                                <span class="requirement-icon">📏</span>
+                                <span>At least 8 characters</span>
+                            </div>
+                            <div class="requirement" id="req-lowercase">
+                                <span class="requirement-icon">🔤</span>
+                                <span>One lowercase letter</span>
+                            </div>
+                            <div class="requirement" id="req-uppercase">
+                                <span class="requirement-icon">🔠</span>
+                                <span>One uppercase letter</span>
+                            </div>
+                            <div class="requirement" id="req-number">
+                                <span class="requirement-icon">🔢</span>
+                                <span>One number</span>
+                            </div>
+                            <div class="requirement" id="req-special">
+                                <span class="requirement-icon">✨</span>
+                                <span>One special character</span>
+                            </div>
+                        </div>
+                        
+                        <div class="password-strength">
+                            <div class="strength-bar">
+                                <div id="strengthFill" class="strength-fill"></div>
+                            </div>
+                            <span id="strengthText">Password strength</span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="signupBtn" disabled>
+                        <span class="arrow-indicator">↑</span>
+                        Create Account
+                    </button>
+                </form>
+                
+                <div class="form-toggle">
+                    <button type="button" onclick="toggleForm('signin')">Already have an account? Sign In</button>
+                </div>
+            </div>
+            
+            <!-- Guest Option -->
+            <button type="button" class="btn btn-guest" onclick="continueAsGuest()">
+                🚀 Continue as Guest
+            </button>
+            
+            <div class="guest-info">
+                <strong>Guest Mode:</strong> You can train models and view results, but won't be able to save models or access advanced features.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentForm = 'signin';
+        
+        // Theme toggle functionality
+        function setupThemeToggle() {
+            const themeBtn = document.getElementById('themeBtn');
+            const currentTheme = localStorage.getItem('theme') || 'light';
+            
+            // Set initial theme
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            themeBtn.textContent = currentTheme === 'light' ? '🌙' : '☀️';
+            
+            themeBtn.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                themeBtn.textContent = newTheme === 'light' ? '🌙' : '☀️';
+            });
+        }
+        
+        function toggleForm(formType) {
+            currentForm = formType;
+            
+            // Hide all forms
+            document.querySelectorAll('.form-container').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Show selected form
+            document.getElementById(formType + 'Form').classList.add('active');
+            
+            // Clear messages and form data
+            hideMessages();
+            clearForms();
+        }
+        
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        function showMessage(type, message) {
+            hideMessages();
+            const element = document.getElementById(type + 'Message');
+            element.textContent = message;
+            element.style.display = 'block';
+        }
+        
+        function clearForms() {
+            document.getElementById('signinFormElement').reset();
+            document.getElementById('signupFormElement').reset();
+            document.getElementById('strengthFill').className = 'strength-fill';
+            document.getElementById('strengthText').textContent = 'Password strength';
+            updatePasswordRequirements('');
+            updateSignupButton('');
+        }
+        
+        function setLoading(form, loading) {
+            if (loading) {
+                form.classList.add('loading');
+                form.querySelector('button[type="submit"]').disabled = true;
+            } else {
+                form.classList.remove('loading');
+                form.querySelector('button[type="submit"]').disabled = false;
+            }
+        }
+        
+        function updatePasswordRequirements(password) {
+            const requirements = {
+                length: password.length >= 8,
+                lowercase: /[a-z]/.test(password),
+                uppercase: /[A-Z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[^A-Za-z0-9]/.test(password)
+            };
+            
+            // Update requirement indicators
+            Object.keys(requirements).forEach(req => {
+                const element = document.getElementById(`req-${req}`);
+                if (element) {
+                    if (requirements[req]) {
+                        element.classList.remove('unmet');
+                        element.classList.add('met');
+                        element.querySelector('.requirement-icon').textContent = '✅';
+                    } else {
+                        element.classList.remove('met');
+                        element.classList.add('unmet');
+                        element.querySelector('.requirement-icon').textContent = req === 'length' ? '📏' : 
+                                                                         req === 'lowercase' ? '🔤' : 
+                                                                         req === 'uppercase' ? '🔠' : 
+                                                                         req === 'number' ? '🔢' : '✨';
+                    }
+                }
+            });
+            
+            // Update signup button state
+            updateSignupButton(password);
+        }
+        
+        function updateSignupButton(password) {
+            const signupBtn = document.getElementById('signupBtn');
+            const requirements = {
+                length: password.length >= 8,
+                lowercase: /[a-z]/.test(password),
+                uppercase: /[A-Z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[^A-Za-z0-9]/.test(password)
+            };
+            
+            const allMet = Object.values(requirements).every(req => req);
+            signupBtn.disabled = !allMet;
+        }
+        
+        function checkPasswordStrength(password) {
+            updatePasswordRequirements(password);
+            
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+            
+            let strength = 0;
+            let feedback = '';
+            
+            if (password.length >= 8) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            if (strength <= 2) {
+                strengthFill.className = 'strength-fill strength-weak';
+                feedback = 'Weak password';
+            } else if (strength <= 3) {
+                strengthFill.className = 'strength-fill strength-medium';
+                feedback = 'Medium strength password';
+            } else if (strength <= 4) {
+                strengthFill.className = 'strength-fill strength-good';
+                feedback = 'Good password';
+            } else {
+                strengthFill.className = 'strength-fill strength-strong';
+                feedback = 'Strong password';
+            }
+            
+            strengthText.textContent = feedback;
+        }
+        
+        // Sign In Form Handler
+        document.getElementById('signinFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            setLoading(form, true);
+            
+            const formData = new FormData();
+            formData.append('username', document.getElementById('signinUsername').value.trim());
+            formData.append('password', document.getElementById('signinPassword').value);
+            
+            try {
+                const response = await fetch('/api/v1/auth/signin', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('success', 'Sign in successful! Redirecting...');
+                    // Store user info in localStorage
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    localStorage.setItem('session_id', result.session_id);
+                    localStorage.setItem('session_timestamp', Date.now().toString());
+                    // Clear last_page to allow legitimate access
+                    localStorage.removeItem('last_page');
+                    
+                    setTimeout(() => {
+                        window.location.href = '/app';
+                    }, 1000);
+                } else {
+                    showMessage('error', result.detail || 'Sign in failed');
+                }
+            } catch (error) {
+                showMessage('error', 'Network error. Please try again.');
+            } finally {
+                setLoading(form, false);
+            }
+        });
+        
+        // Sign Up Form Handler
+        document.getElementById('signupFormElement').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            setLoading(form, true);
+            
+            const username = document.getElementById('signupUsername').value.trim();
+            const password = document.getElementById('signupPassword').value;
+            const email = document.getElementById('signupEmail').value.trim();
+            
+            // Enhanced validation
+            if (username.length < 3) {
+                showMessage('error', 'Username must be at least 3 characters long');
+                setLoading(form, false);
+                return;
+            }
+            
+            if (password.length < 8) {
+                showMessage('error', 'Password must be at least 8 characters long');
+                setLoading(form, false);
+                return;
+            }
+            
+            // Check all password requirements
+            const requirements = {
+                lowercase: /[a-z]/.test(password),
+                uppercase: /[A-Z]/.test(password),
+                number: /[0-9]/.test(password),
+                special: /[^A-Za-z0-9]/.test(password)
+            };
+            
+            if (!Object.values(requirements).every(req => req)) {
+                showMessage('error', 'Password must meet all requirements');
+                setLoading(form, false);
+                return;
+            }
+            
+            if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                showMessage('error', 'Please enter a valid email address');
+                setLoading(form, false);
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('password', password);
+            if (email) {
+                formData.append('email', email);
+            }
+            
+            try {
+                const response = await fetch('/api/v1/auth/signup', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('success', 'Account created successfully! Please sign in.');
+                    // Switch to sign in form
+                    setTimeout(() => {
+                        toggleForm('signin');
+                        // Pre-fill username
+                        document.getElementById('signinUsername').value = username;
+                    }, 1500);
+                } else {
+                    showMessage('error', result.detail || 'Sign up failed');
+                }
+            } catch (error) {
+                showMessage('error', 'Network error. Please try again.');
+            } finally {
+                setLoading(form, false);
+            }
+        });
+        
+        function continueAsGuest() {
+            // Clear any existing user data
+            localStorage.removeItem('user');
+            localStorage.removeItem('session_id');
+            localStorage.removeItem('allTrainingData');
+            localStorage.removeItem('comprehensiveResults');
+            
+            // Redirect to guest page
+            window.location.href = '/guest';
+        }
+        
+        // Check if user is already signed in
+        window.addEventListener('load', async () => {
+            setupThemeToggle();
+            
+            // Set current page as last visited
+            localStorage.setItem('last_page', 'login');
+            
+            // Block back navigation from login page
+            blockNavigation();
+            
+            const sessionId = localStorage.getItem('session_id');
+            if (sessionId) {
+                try {
+                    const response = await fetch('/api/v1/auth/me', {
+                        headers: {
+                            'Cookie': `session_id=${sessionId}`
+                        }
+                    });
+                    
+                    const result = await response.json();
+                    if (result.authenticated) {
+                        // User is already signed in, redirect to main page
+                        window.location.href = '/app';
+                    } else {
+                        // Invalid session, clear it
+                        localStorage.removeItem('session_id');
+                        localStorage.removeItem('user');
+                        localStorage.removeItem('session_timestamp');
+                        localStorage.removeItem('last_page');
+                    }
+                } catch (error) {
+                    // Clear invalid session
+                    localStorage.removeItem('session_id');
+                    localStorage.removeItem('user');
+                    localStorage.removeItem('session_timestamp');
+                    localStorage.removeItem('last_page');
+                }
+            }
+        });
+        
+        // Block back/forward navigation aggressively
+        function blockNavigation() {
+            // Disable back button
+            history.pushState(null, null, location.href);
+            window.addEventListener('popstate', function() {
+                history.pushState(null, null, location.href);
+                // Prevent going back from login page
+                return false;
+            });
+            
+            // Block forward button
+            window.addEventListener('pageshow', function(event) {
+                if (event.persisted) {
+                    // Page loaded from cache (back/forward), reload fresh
+                    window.location.reload();
+                }
+            });
+        }
+    </script>
+</body>
+</html>

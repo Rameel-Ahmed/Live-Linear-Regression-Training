@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from routes.user_routes import user_router
+from routes.auth_routes import auth_router
 from fastapi.responses import HTMLResponse
 from fastapi import HTTPException
 import logging
@@ -34,9 +35,29 @@ app.add_middleware(
 
 @app.get("/", response_class=HTMLResponse)
 async def root() -> HTMLResponse:
-    """Serve the main HTML page."""
+    """Serve the login page."""
+    try:
+        logger.info("Serving static/login.html")
+        with open("static/login.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Login page not found")
+
+@app.get("/app", response_class=HTMLResponse)
+async def app_page() -> HTMLResponse:
+    """Serve the main application page."""
     try:
         logger.info("Serving static/index.html")
+        with open("static/index.html", "r", encoding="utf-8") as f:
+            return HTMLResponse(content=f.read())
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="Main page not found")
+
+@app.get("/guest", response_class=HTMLResponse)
+async def guest_page() -> HTMLResponse:
+    """Serve the guest application page."""
+    try:
+        logger.info("Serving static/index.html for guest")
         with open("static/index.html", "r", encoding="utf-8") as f:
             return HTMLResponse(content=f.read())
     except FileNotFoundError:
@@ -45,6 +66,7 @@ async def root() -> HTMLResponse:
 
 # Register all routes from the controller
 app.include_router(user_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1/auth")
 
 if __name__ == "__main__":
     import uvicorn

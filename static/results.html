@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <script>
       (function () {
         const t = localStorage.getItem("theme") || "light";
@@ -33,15 +36,22 @@
         </div>
         <button class="sidebar-toggle" id="sidebarToggle">☰</button>
       </div>
+      <!-- User Info Section -->
+      <div id="userInfo" class="user-info" style="display: none;">
+        <div class="user-details">
+          <span id="username">Guest</span>
+          <button id="logoutBtn" class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+      </div>
+      
       <a href="/static/index.html" class="nav-item" data-step="1"
         >Data Upload</a
       >
-      <a href="/static/training.html" class="nav-item" data-step="2"
-        >Training Setup</a
-      >
-      <a href="/static/results.html" class="nav-item" data-step="3"
+      <div class="nav-item" data-step="2" id="trainingNavItem">Training Setup</div>
+      <a href="/static/results.html" class="nav-item active" data-step="3"
         >Results & Predict</a
       >
+      <div class="nav-item" id="savedModelsNavItem" style="display: none;">Saved Models</div>
     </nav>
 
     <!-- Main Content -->
@@ -53,7 +63,6 @@
             <h1>Model Results & Predictions</h1>
             <p>Analyze your trained model and make predictions on new data</p>
           </div>
-          <button class="theme-toggle" id="themeBtn">🌙</button>
         </div>
       </div>
 
@@ -266,6 +275,33 @@
               </table>
             </div>
           </div>
+          
+          <!-- Model Saving Section (Only for signed-in users) -->
+          <div class="card model-saving-card" id="modelSavingCard" style="display: none;">
+            <div
+              style="
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                padding-bottom: 6px;
+                margin-bottom: 10px;
+              "
+            >
+              <h3 style="margin: 0; font-size: 1.3rem">Save Model</h3>
+            </div>
+            
+            <div class="model-saving-form">
+              <div class="form-group">
+                <label for="modelName">Model Name:</label>
+                <input type="text" id="modelName" placeholder="Enter model name" maxlength="50">
+              </div>
+              <button class="btn btn-primary" id="saveModelBtn" onclick="saveModel()">
+                💾 Save Model
+              </button>
+            </div>
+            
+            <div id="saveModelMessage" class="save-message" style="display: none;"></div>
+          </div>
         </div>
 
         <!-- Right Column -->
@@ -347,5 +383,352 @@
     </main>
 
     <script type="module" src="/static/js/results.js?v=3"></script>
+    
+    <script>
+      // User Authentication Functions
+      function checkUserAuth() {
+        const user = JSON.parse(localStorage.getItem('user') || 'null');
+        const sessionId = localStorage.getItem('session_id');
+        
+        if (user && sessionId) {
+          // User is signed in
+          document.getElementById('userInfo').style.display = 'block';
+          document.getElementById('username').textContent = user.username;
+          document.getElementById('savedModelsNavItem').style.display = 'block';
+          
+          // Check if this is a saved model or newly trained model
+          const selectedModelId = localStorage.getItem('selectedModelId');
+          const trainingData = localStorage.getItem('allTrainingData');
+          
+          // Only show save model button if this is a newly trained model (not a saved model)
+          if (trainingData && !selectedModelId) {
+            document.getElementById('modelSavingCard').style.display = 'block';
+          } else {
+            document.getElementById('modelSavingCard').style.display = 'none';
+          }
+          
+          // Make saved models nav item clickable
+          document.getElementById('savedModelsNavItem').style.cursor = 'pointer';
+          document.getElementById('savedModelsNavItem').onclick = () => {
+            window.location.href = '/static/saved-models.html';
+          };
+          
+          // For logged-in users: Training nav item should be disabled until they have data
+          document.getElementById('trainingNavItem').style.cursor = 'not-allowed';
+          document.getElementById('trainingNavItem').onclick = () => {
+            // Check if user has loaded data
+            if (window.cleanedData && window.cleanedDataColumns) {
+              window.location.href = '/static/training.html';
+            } else {
+              showMessage('Please load and clean data first to access training.', 'warning');
+            }
+          };
+          
+          // Add disabled class to training nav item for logged-in users
+          document.getElementById('trainingNavItem').classList.add('disabled');
+        } else {
+          // User is guest
+          document.getElementById('userInfo').style.display = 'none';
+          document.getElementById('savedModelsNavItem').style.display = 'none';
+          document.getElementById('modelSavingCard').style.display = 'none';
+          
+          // For guests: Training nav item should be disabled until they have data
+          document.getElementById('trainingNavItem').style.cursor = 'not-allowed';
+          document.getElementById('trainingNavItem').onclick = () => {
+            // Check if user has loaded data
+            if (window.cleanedData && window.cleanedDataColumns) {
+              window.location.href = '/static/training.html';
+            } else {
+              showMessage('Please load and clean data first to access training.', 'warning');
+            }
+          };
+          
+          // Add disabled class to training nav item for guests
+          document.getElementById('trainingNavItem').classList.add('disabled');
+        }
+      }
+      
+      function logout() {
+        const sessionId = localStorage.getItem('session_id');
+        
+        if (sessionId) {
+          // Call logout API
+          fetch('/api/v1/auth/signout', {
+            method: 'POST',
+            headers: {
+              'Cookie': `session_id=${sessionId}`
+            }
+          }).catch(error => console.error('Logout error:', error));
+        }
+        
+        // Clear local storage
+        localStorage.removeItem('user');
+        localStorage.removeItem('session_id');
+        
+        // Redirect to login page
+        window.location.href = '/';
+      }
+      
+      // Model Saving Function
+      async function saveModel() {
+        const modelName = document.getElementById('modelName').value.trim();
+        if (!modelName) {
+          showSaveMessage('Please enter a model name', 'error');
+          return;
+        }
+        
+        // Get current model data from the page with error handling
+        try {
+          // Get the actual training data directly from localStorage (the same data used to render the page)
+          const trainingDataStr = localStorage.getItem('allTrainingData');
+          if (!trainingDataStr) {
+            showSaveMessage('No training data found. Please complete training first.', 'error');
+            return;
+          }
+          
+          const trainingData = JSON.parse(trainingDataStr);
+          console.log('Training data for saving:', trainingData); // Debug
+          
+          // Extract the actual values that were used to render the page
+          const modelData = {
+            model_name: modelName,
+            theta_1: trainingData.final_theta1, // slope (coefficient of x)
+            theta_0: trainingData.final_theta0, // y-intercept
+            rmse: trainingData.final_rmse || 0,
+            mae: trainingData.final_mae || 0,
+            r2_score: trainingData.final_r2 || 0,
+            sklearn_rmse: trainingData.sklearn_comparison?.sklearn_results?.rmse || null,
+            sklearn_mae: trainingData.sklearn_comparison?.sklearn_results?.mae || null,
+            sklearn_r2: trainingData.sklearn_comparison?.sklearn_results?.r2_score || null
+          };
+          
+          // Validate that we have the essential data
+          if (isNaN(modelData.theta_0) || isNaN(modelData.theta_1)) {
+            showSaveMessage('Invalid model parameters. Please ensure training is complete.', 'error');
+            return;
+          }
+          
+                    // Continue with saving...
+          await saveModelToServer(modelData);
+          
+        } catch (error) {
+          console.error('Error preparing model data:', error);
+          showSaveMessage('Error preparing model data. Please ensure all values are valid.', 'error');
+        }
+      }
+      
+      // Separate function to save model to server
+      async function saveModelToServer(modelData) {
+        try {
+          const formData = new FormData();
+          Object.keys(modelData).forEach(key => {
+            if (modelData[key] !== null && modelData[key] !== undefined) {
+              formData.append(key, modelData[key]);
+            }
+          });
+          
+          const response = await fetch('/api/v1/auth/save-model', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const result = await response.json();
+          
+          if (result.success) {
+            showSaveMessage('Model saved successfully!', 'success');
+            document.getElementById('modelName').value = '';
+          } else {
+            showSaveMessage('Failed to save model: ' + result.detail, 'error');
+          }
+        } catch (error) {
+          showSaveMessage('Error saving model: ' + error.message, 'error');
+        }
+      }
+      
+      function showSaveMessage(message, type) {
+        const messageElement = document.getElementById('saveModelMessage');
+        messageElement.textContent = message;
+        messageElement.className = `save-message ${type}`;
+        messageElement.style.display = 'block';
+        
+        setTimeout(() => {
+          messageElement.style.display = 'none';
+        }, 5000);
+      }
+      
+      // Check auth on page load
+      document.addEventListener('DOMContentLoaded', checkUserAuth);
+      
+      // Validate session only for authenticated users
+      async function validateSession() {
+        const sessionId = localStorage.getItem('session_id');
+        const user = localStorage.getItem('user');
+        
+        // If no session, user is guest - allow access
+        if (!sessionId || !user) {
+          return true;
+        }
+        
+        // User has session, validate it
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            headers: {
+              'Cookie': `session_id=${sessionId}`
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (!result.authenticated) {
+            // Invalid session, clear storage but allow as guest
+            clearUserData();
+            return true;
+          }
+          
+          return true;
+        } catch (error) {
+          // Network error, clear storage but allow as guest
+          clearUserData();
+          return true;
+        }
+      }
+      
+      function clearUserData() {
+        localStorage.removeItem('user');
+        localStorage.removeItem('session_id');
+        localStorage.removeItem('allTrainingData');
+        localStorage.removeItem('selectedModelId');
+      }
+      
+      // Check session validity on page load
+      window.addEventListener('load', async () => {
+        await validateSession();
+        checkUserAuth();
+        
+        // Start session heartbeat for authenticated users
+        const sessionId = localStorage.getItem('session_id');
+        const user = localStorage.getItem('user');
+        if (sessionId && user) {
+          startSessionHeartbeat();
+        }
+      });
+      
+      // Check session on page focus (when user returns to tab)
+      window.addEventListener('focus', async () => {
+        await validateSession();
+        checkUserAuth();
+      });
+      
+      // Check session on page visibility change
+      document.addEventListener('visibilitychange', async () => {
+        if (!document.hidden) {
+          await validateSession();
+          checkUserAuth();
+        }
+      });
+      
+      // Session heartbeat system - continuously validate session
+      let sessionHeartbeat;
+      
+      function startSessionHeartbeat() {
+        // Check session every 5 seconds
+        sessionHeartbeat = setInterval(async () => {
+          await validateSession();
+          checkUserAuth();
+        }, 5000);
+      }
+      
+      function stopSessionHeartbeat() {
+        if (sessionHeartbeat) {
+          clearInterval(sessionHeartbeat);
+          sessionHeartbeat = null;
+        }
+      }
+      
+      // Enhanced session validation with redirect protection
+      async function validateSession() {
+        const sessionId = localStorage.getItem('session_id');
+        const user = localStorage.getItem('user');
+        
+        // If no session, user is guest - allow access
+        if (!sessionId || !user) {
+          return true;
+        }
+        
+        // User has session, validate it
+        try {
+          const response = await fetch('/api/v1/auth/me', {
+            headers: {
+              'Cookie': `session_id=${sessionId}`
+            }
+          });
+          
+          const result = await response.json();
+          
+          if (!result.authenticated) {
+            // Invalid session, clear storage and redirect to login
+            clearUserData();
+            window.location.href = '/';
+            return false;
+          }
+          
+          return true;
+        } catch (error) {
+          // Network error, clear storage and redirect to login
+          clearUserData();
+          window.location.href = '/';
+          return false;
+        }
+      }
+      
+      // Additional protection against browser navigation
+      window.addEventListener('pageshow', async (event) => {
+        // This event fires when page is loaded from cache (back/forward)
+        if (event.persisted) {
+          // Page was loaded from cache, validate session immediately
+          await validateSession();
+          checkUserAuth();
+        }
+      });
+      
+      // Protect against beforeunload (when user tries to navigate away)
+      window.addEventListener('beforeunload', () => {
+        // Clear heartbeat when leaving page
+        stopSessionHeartbeat();
+      });
+      
+      // Show message function
+      function showMessage(message, type) {
+        // Create a temporary message display
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}-message`;
+        messageDiv.textContent = message;
+        messageDiv.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          padding: 1rem;
+          border-radius: 8px;
+          color: white;
+          font-weight: 500;
+          z-index: 1000;
+          max-width: 300px;
+        `;
+        
+        if (type === 'warning') {
+          messageDiv.style.backgroundColor = '#f39c12';
+        } else if (type === 'error') {
+          messageDiv.style.backgroundColor = '#e74c3c';
+        } else {
+          messageDiv.style.backgroundColor = '#27ae60';
+        }
+        
+        document.body.appendChild(messageDiv);
+        
+        setTimeout(() => {
+          messageDiv.remove();
+        }, 4000);
+      }
+    </script>
   </body>
 </html>

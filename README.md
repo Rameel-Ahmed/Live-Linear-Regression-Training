@@ -7,7 +7,7 @@
 
 A comprehensive web-based platform for training and visualizing univariate linear regression models with real-time parameter optimization and interactive visualizations.
 
-## 🚀 Features
+## Features
 
 - **Interactive Data Upload**: Support for CSV file uploads with data validation
 - **Real-time Training Visualization**: Live cost function plots and regression line updates
@@ -17,7 +17,7 @@ A comprehensive web-based platform for training and visualizing univariate linea
 - **FastAPI Backend**: High-performance Python backend with RESTful API
 - **Gradient Descent Implementation**: Custom optimization algorithm with early stopping
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
@@ -56,7 +56,7 @@ A comprehensive web-based platform for training and visualizing univariate linea
 4. **Access the application**
    Open your browser and navigate to `http://127.0.0.1:8000`
 
-## 🎯 Usage
+## Usage
 
 ### 1. Data Upload
 - Navigate to the Data Upload page
@@ -84,7 +84,7 @@ A comprehensive web-based platform for training and visualizing univariate linea
 - Export model parameters and results
 - Compare with scikit-learn implementation
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 linear-regression-final/
@@ -142,7 +142,7 @@ linear-regression-final/
 }
 ```
 
-## ✨ Features in Detail
+## Features in Detail
 
 ### Real-time Training Visualization
 - **Cost Function Plot**: Shows convergence of the loss function over epochs
@@ -161,7 +161,7 @@ linear-regression-final/
 - **MAE**: Mean Absolute Error
 - **Model Comparison**: Benchmarking against scikit-learn
 
-## 🧮 Mathematical Implementation
+## Mathematical Implementation
 
 ### Linear Regression Model
 The core model implements univariate linear regression with the hypothesis function:
@@ -255,7 +255,7 @@ Training stops if no improvement is observed for a specified number of epochs.
 - **Convergence Guarantee**: Gradient descent converges to local minimum for convex cost function
 - **Scalability**: O(m) complexity per epoch, where m is training set size
 
-## 📸 Screenshots & Page Descriptions
+## Screenshots & Page Descriptions
 
 ### 1. Data Upload Interface (`/static/index.html`)
 **Purpose**: Main landing page for data ingestion and preprocessing
@@ -323,7 +323,7 @@ Training stops if no improvement is observed for a specified number of epochs.
 - **Annotations**: Add helpful callouts for key features
 - **Consistency**: Use the same theme (light or dark) across all screenshots
 
-## 🔧 Configuration
+## Configuration
 
 ### Environment Variables
 ```bash
@@ -342,7 +342,7 @@ DEFAULT_TOLERANCE = 1e-4
 DEFAULT_EARLY_STOPPING = False
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Run Tests
 ```bash
@@ -381,75 +381,8 @@ EXPOSE 8000
 CMD ["python", "main.py"]
 ```
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 
-
-## 📊 Performance
-
-- **Training Speed**: 1000 epochs in ~2-3 seconds (typical dataset)
-- **Memory Usage**: Efficient numpy-based operations
-- **Scalability**: Handles datasets up to 100,000+ samples
-- **Accuracy**: Comparable to scikit-learn implementation
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Training doesn't converge:**
-- Reduce learning rate (try 0.001 or 0.0001)
-- Increase maximum epochs (try 500 or 1000)
-- Check data quality and ensure proper normalization
-- Verify data doesn't contain extreme outliers
-
-**Memory errors:**
-- Reduce dataset size or use data sampling
-- Check available system memory
-- Ensure proper data type handling
-
-**API connection issues:**
-- Verify server is running on correct port (8000)
-- Check CORS settings in main.py
-- Ensure all required dependencies are installed
-- Check firewall and network settings
-
-**Data processing errors:**
-- Verify CSV format and column structure
-- Ensure numerical data in selected columns
-- Check for missing values or invalid data types
-
-## 📚 Dependencies
-
-### Core Dependencies
-- **FastAPI**: Modern web framework for APIs
-- **NumPy**: Numerical computing library
-- **Pandas**: Data manipulation and analysis
-- **Uvicorn**: ASGI server for FastAPI
-
-
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- **FastAPI Community**: For the excellent web framework
-- **NumPy/Pandas Teams**: For robust numerical computing tools
-- **Open Source Contributors**: For inspiration and best practices
-
-## 📞 Support
-
-- **Issues**: Report bugs via GitHub Issues
-- **Discussions**: Join community discussions
-- **Documentation**: Check inline code documentation
-- **Examples**: Review sample datasets and use cases
 
 ---
 

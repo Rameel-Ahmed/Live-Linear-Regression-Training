@@ -1,2 +1,4 @@
-model/
+models/
 __pycache__/
+linear_regression.db
+*.env

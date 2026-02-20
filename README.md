@@ -6,6 +6,7 @@
 [![Frontend](https://img.shields.io/badge/Frontend-HTML%2FCSS%2FJS-orange?style=flat-square)](https://developer.mozilla.org/)
 
 A comprehensive web-based platform for training and visualizing univariate linear regression models with real-time parameter optimization and interactive visualizations.
+![alt text](static/images/image.png)
 
 ## Features
 
